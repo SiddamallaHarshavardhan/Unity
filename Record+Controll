@@ -1,0 +1,96 @@
+using UnityEngine;
+using System.IO;
+
+public class CarController : MonoBehaviour
+{
+    private float moveSpeed = 5f;
+    private float turnSpeed = 180f;
+    private string csvFilePath;
+
+    private int rightTurnCount = 0;
+    private int leftTurnCount = 0;
+    private int forwardMoveCount = 0;
+    private int backwardMoveCount = 0;
+
+    private void Start()
+    {
+        // Generate a unique CSV file path based on the current timestamp
+        string timestamp = System.DateTime.Now.ToString("yyyyMMdd_HHmmss");
+        csvFilePath = $"input_data_{timestamp}.csv";
+
+        // Write header to CSV file
+        using (StreamWriter headerWriter = new StreamWriter(csvFilePath, true))
+        {
+            headerWriter.WriteLine("Timestamp,RightTurns,LeftTurns,ForwardMoves,BackwardMoves");
+        }
+    }
+
+    private void Update()
+    {
+        // Get user input
+        float horizontalInput = Input.GetAxis("Horizontal");
+        float verticalInput = Input.GetAxis("Vertical");
+
+        // Rotate the car based on user input
+        transform.Rotate(Vector3.up, horizontalInput * turnSpeed * Time.deltaTime);
+
+        // Move the car based on user input
+        Vector3 moveDirection = new Vector3(0, 0, verticalInput);
+        transform.Translate(moveDirection * moveSpeed * Time.deltaTime);
+
+        // Record input data
+        RecordInputData(horizontalInput, verticalInput);
+    }
+
+    private void RecordInputData(float horizontalInput, float verticalInput)
+    {
+        // Create or append to the CSV file
+        using (StreamWriter writer = new StreamWriter(csvFilePath, true))
+        {
+            // Write input data to CSV
+            writer.WriteLine($"{System.DateTime.Now},{rightTurnCount},{leftTurnCount},{forwardMoveCount},{backwardMoveCount}");
+
+            // Count turns and movements
+            if (horizontalInput < 0)
+            {
+                // User is turning left
+                leftTurnCount++;
+            }
+            else if (horizontalInput > 0)
+            {
+                // User is turning right
+                rightTurnCount++;
+            }
+
+            if (verticalInput > 0)
+            {
+                // User is moving forward
+                forwardMoveCount++;
+            }
+            else if (verticalInput < 0)
+            {
+                // User is moving backward
+                backwardMoveCount++;
+            }
+        }
+    }
+
+    private void OnDisable()
+    {
+        // Output total input counts when the script is disabled (e.g., when the car is destroyed)
+        Debug.Log($"Left Turns: {leftTurnCount}, Right Turns: {rightTurnCount}, Forward Moves: {forwardMoveCount}, Backward Moves: {backwardMoveCount}");
+
+        // Write total input counts to CSV file
+        WriteToCSV();
+    }
+
+    private void WriteToCSV()
+    {
+        // Create or append to the CSV file
+        using (StreamWriter writer = new StreamWriter(csvFilePath, true))
+        {
+            // Write total input counts to CSV
+            writer.WriteLine($"Total Left Turns: {leftTurnCount}, Total Right Turns: {rightTurnCount}, Total Forward Moves: {forwardMoveCount}, Total Backward Moves: {backwardMoveCount}");
+        }
+    }
+}
